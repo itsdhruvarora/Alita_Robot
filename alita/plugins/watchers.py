@@ -210,6 +210,45 @@ async def gban_watcher(c: Alita, m: Message):
             )
     return
 
+    ldb = Locking(m.chat.id)
+    data = ldb.get_locks()
+    if m.via_bot and data["inline"]:
+        await deleter(m)
+    elif m.media and data["media"]:
+        await deleter(m)
+    elif any((m.forward_from, m.forward_date)) and data["forward"]:
+        await deleter(m)
+    elif m.text and any(
+        ((data["longtext"] and len(m.text) > 2010), data["text"])):
+        await deleter(m)
+    elif m.poll and data["polls"]:
+        await deleter(m)
+    elif m.command and data["command"]:
+        await deleter(m)
+    elif m.sticker and data["stickers"]:
+        await deleter(m)
+    elif m.video and data["video"]:
+        await deleter(m)
+    elif m.voice and data["voice"]:
+        await deleter(m)
+    elif m.document and data["document"]:
+        await deleter(m)
+    elif m.animation and data["animations"]:
+        await deleter(m)
+    elif m.entities and any((data["links"], data["hashtags"])):
+        for en in m.entities:
+            if data["links"] and en.type in (
+                    MessageEntityType.URL,
+                    MessageEntityType.TEXT_LINK,
+            ):
+                await deleter(m)
+                break
+            if data["hashtags"] and en.type == MessageEntityType.HASHTAG:
+                await deleter(m)
+                break
+    return
+
+
 
 @Alita.on_message(filters.chat(BLACKLIST_CHATS) & filters.new_chat_members)
 async def bl_chats_watcher(c: Alita, m: Message):
